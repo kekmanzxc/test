@@ -165,7 +165,6 @@ body.cinema .player{position:relative;z-index:7}
     </div>
   </div>
     <div class="kodik" id="kodik"><div class="kframe"><iframe id="kframe" title="Kodik" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe><div class="kempty" id="kempty">Вставьте ссылку Kodik в поле под плеером и нажмите «Запустить Kodik»</div></div></div>
-    <div class="kbar"><input id="kurl" type="url" placeholder="Вставьте ссылку Kodik (https://kodik.info/…)" aria-label="Ссылка Kodik"><button id="kgo">▶ Запустить Kodik</button></div>
     <div class="pfoot"><div class="eps" id="eps" aria-label="Серии"></div>
 <div class="dl"><span>Серии 1–13 [WEBRip 1080p]</span><span>Дата добавления уточняется</span><a href="#">Скачать</a></div></div>
   </section>
@@ -197,13 +196,13 @@ const v=$('vid');
 const fmt=s=>{s=Math.max(0,s);return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')};
 for(let i=1;i<=13;i++){const b=document.createElement('button');b.textContent=i;b.onclick=()=>setEp(i);$('eps').appendChild(b)}
 const parts=()=>VIDEOS[ep]||[];
-function setEp(n){ep=Math.min(13,Math.max(1,n));v.pause();seg=0;base=0;pending=null;
+function setEp(n){const wasOwn=!pl.classList.contains('k');ep=Math.min(13,Math.max(1,n));v.pause();seg=0;base=0;pending=null;
  $('epTitle').textContent='Серия '+ep;
  [...$('eps').children].forEach((b,i)=>b.classList.toggle('on',i+1===ep));
  const P=parts();total=P.reduce((a,x)=>a+x.d,0);
  const sc=$('screen');sc.classList.toggle('has',P.length>0);sc.classList.toggle('empty',P.length===0);sc.classList.remove('playing');
  if(P.length){v.src=P[0].u}else{v.removeAttribute('src');v.load()}
- icons(false);lastSave=0;resumeT=readSaved();draw();showResume()}
+ icons(false);lastSave=0;resumeT=readSaved();draw();showResume();kodikLoad();source(!(wasOwn&&P.length>0))}
 function icons(p){$('play').textContent=p?'⏸':'▶';$('big').textContent=p?'⏸':'▶'}
 function cur(){return base+(v.currentTime||0)}
 function draw(){const t=cur();$('fill').style.width=(total?t/total*100:0)+'%';$('time').textContent=fmt(t)+' / '+fmt(total)}
@@ -245,7 +244,6 @@ $('burger').onclick=()=>$('nav').classList.toggle('open');
 $('theme').onclick=e=>{e.preventDefault();const r=document.documentElement;
  const dark=r.dataset.theme?r.dataset.theme==='dark':!matchMedia('(prefers-color-scheme:light)').matches;
  r.dataset.theme=dark?'light':'dark'};
-setEp(2);
 
 /* ---- Громкость ---- */
 const vs=$('vols');
@@ -265,12 +263,20 @@ function source(k){pl.classList.toggle('k',k);$('tabOwn').classList.toggle('on',
 $('tabOwn').onclick=()=>source(false);$('tabK').onclick=()=>source(true);
 $('tabLight').onclick=()=>{const on=document.body.classList.toggle('cinema');$('tabLight').classList.toggle('on',on)};
 $('tabErr').onclick=()=>toast('Спасибо! Сообщение об ошибке отправлено.');
-function loadKodik(u){u=(u||'').trim();if(u.startsWith('//'))u='https:'+u;
- if(!/^https:\/\/[^\s]+$/i.test(u)){toast('Нужна ссылка вида https://kodik.info/…');return false}
- $('kframe').src=u;$('kframe').parentNode.classList.add('on');try{localStorage.setItem('sbr-kodik',u)}catch(_){}return true}
-$('kgo').onclick=()=>{if(loadKodik($('kurl').value))source(true)};
-$('kurl').addEventListener('keydown',e=>{if(e.key==='Enter')$('kgo').click()});
-try{const ku=localStorage.getItem('sbr-kodik');if(ku){$('kurl').value=ku;loadKodik(ku)}}catch(_){}
+const animeData={
+  title:"Гонка «Стальной шар»",
+  episodes:{
+    1:"https://animelib.org/ru/anime/27026--jojo-no-kimyou-na-bouken-steel-ball-run-2nd-stage-anime/watch?episode=143321&player=Kodik&team=65992&translation_type=2",
+    2:"https://kodikplayer.com/seria/1670794/d50a713e588bceae6cde6872c4cc0ce0/720p?translations=false",
+    3:null,
+    4:null,5:null,6:null,7:null,8:null,9:null,10:null,11:null,12:null,13:null
+  }
+};
+function kodikLoad(){const u=animeData.episodes[ep],f=$('kframe'),w=f.parentNode;
+ if(u){if(f.getAttribute('src')!==u)f.src=u;w.classList.add('on')}
+ else{f.removeAttribute('src');w.classList.remove('on');$('kempty').textContent='Серия '+ep+' пока не добавлена'}}
+/* Автозагрузка: открываем Kodik и 1-ю серию */
+source(true);setEp(1);
 /* ---- Комментарии ---- */
 const CK='sbr-comments';
 const plural=(n,f)=>f[n%10===1&&n%100!==11?0:(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?1:2];
